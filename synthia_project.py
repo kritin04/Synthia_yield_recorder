@@ -404,7 +404,15 @@ def main():
                         
                     tag_number = x['tag_number']['0']
                     milk_yield = x['yield']['0']
-                    
+                    farm_name = x['farm_name']['0']
+                    timestamp_ms = int(x['date']['0'])
+
+# Convert the timestamp from milliseconds to seconds
+                    timestamp_s = timestamp_ms / 1000.0
+                    date = datetime.fromtimestamp(timestamp_s)
+                    date_time = date.strftime('%Y-%m-%d %H:%M:%S')
+                    hindi_string = f"आपके खेत का नाम {farm_name}, इस {date_time} पर , गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया 100 | क्या ये सही है?"
+                    audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
                     hindi_string = f"गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया | क्या ये सही है?"
                     audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
                     
