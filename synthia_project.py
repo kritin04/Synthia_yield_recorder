@@ -413,8 +413,7 @@ def main():
                     date_time = date.strftime('%Y-%m-%d %H:%M:%S')
                     hindi_string = f"आपके खेत का नाम {farm_name}, इस {date_time} पर , गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया 100 | क्या ये सही है?"
                     audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
-                    hindi_string = f"गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया | क्या ये सही है?"
-                    audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
+                
                     
                     if audio_base64:
                         audio_bytes = base64.b64decode(audio_base64)
