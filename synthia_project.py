@@ -175,7 +175,7 @@ def final_data(tag_number, new_yield):
     text = {
     'tag_number': [tag_number],
     'yield': [new_yield],
-    'date': datetime.now()
+    'date': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
         }
     extracted = pd.DataFrame(text)
     # final_df = pd.merge( data, extracted, right_on=['tag_number'], left_on=['tag_number'])
@@ -375,7 +375,7 @@ def main():
                         last_df = final_df.to_json()
                         print(last_df)
                         file=json.dumps(last_df)
-                        key=f"Extracted_text/extracted_text.json"
+                        key = f"Extracted_text/{temp_df['farm_name']}/{temp_df['deviceid']}/extracted_text.json"
                         s3.put_object(Body=file, Bucket="transcribetestkritin", Key=key)
                     else:
                         print("No cow ID or yield amount found in the input.")
@@ -405,14 +405,12 @@ def main():
                     tag_number = x['tag_number']['0']
                     milk_yield = x['yield']['0']
                     farm_name = x['farm_name']['0']
-                    #timestamp_ms = int(x['date']['0'])
+                    date_time = int(x['date']['0'])
 
 # Convert the timestamp from milliseconds to seconds
-                    #'''timestamp_s = timestamp_ms / 1000.0
-                    #date = datetime.fromtimestamp(timestamp_s)
-                    #date_time = date.strftime('%Y-%m-%d %H:%M:%S')'''
-                    #, इस {date_time} पर ,
-                    hindi_string = f"आपके खेत का नाम {farm_name} गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया| क्या ये सही है?"
+                   
+                    #
+                    hindi_string = f"आपके खेत का नाम {farm_name}, इस {date_time} पर , गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया| क्या ये सही है?"
                     audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
                 
                     
