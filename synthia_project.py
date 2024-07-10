@@ -405,7 +405,7 @@ def main():
                     tag_number = x['tag_number']['0']
                     milk_yield = x['yield']['0']
                     
-                    hindi_string = f"गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया 100 | क्या ये सही है?"
+                    hindi_string = f"गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया | क्या ये सही है?"
                     audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
                     
                     if audio_base64:
