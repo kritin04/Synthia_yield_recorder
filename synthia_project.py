@@ -16,7 +16,7 @@ import streamlit as st
 import pandas as pd
 import re
 import os
-import word2number
+from word2number import w2n 
 import re
 from datetime import datetime
 import time
