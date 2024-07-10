@@ -207,40 +207,6 @@ s3 = boto3.client("s3", region_name="ap-south-1")
 transcribe = boto3.client("transcribe", region_name="ap-south-1")
 #model_id = "anthropic.claude-3-haiku-20240307-v1:0"
 #model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
-'''model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
-
-model_kwargs =  { 
-    "max_tokens": 2048,
-    "temperature": 0.0,
-    "top_k": 250,
-    "top_p": 1,
-    "stop_sequences": ["\n\nHuman"],
-}
-
-# ------------------------------------------------------
-# LangChain - RAG chain with citations
-
-
-prompt = ChatPromptTemplate.from_template(template)
-
-retriever = AmazonKnowledgeBasesRetriever(
-    knowledge_base_id="IYUW1ESSV5",
-    region_name="us-east-1",
-    retrieval_config={"vectorSearchConfiguration": {"numberOfResults": 4}},
-)
-
-model = BedrockChat(
-    client=bedrock_runtime,
-    model_id=model_id,
-    model_kwargs=model_kwargs,
-    
-)
-
-chain = (
-    RunnableParallel({"context": retriever, "question": RunnablePassthrough()})
-    .assign(response = prompt | model | StrOutputParser())
-    .pick(["response", "context"])
-)'''
 
 #defining the text to speech function
 def text_to_speech(text, voice_id="Aditi"):
