@@ -2,11 +2,6 @@ import boto3
 import logging
 import base64
 import json
-#from langchain_core.prompts import ChatPromptTemplate
-#from langchain_core.runnables import RunnablePassthrough, RunnableParallel
-#from langchain_core.output_parsers import StrOutputParser
-#from langchain_community.chat_models import BedrockChat
-#from langchain_community.retrievers import AmazonKnowledgeBasesRetriever
 import wave
 from io import BytesIO
 from datetime import datetime
@@ -21,23 +16,27 @@ import re
 from datetime import datetime
 import time
 bucket_name = "transcribetestkritin"
-# Amazon Bedrock - settings
+
 ttp = r'C:\Users\Adithya Sau\Downloads\CowIDs.xlsx'
 os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA5FTY7VMV5OJBO7NW'
 os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
+
 s3 = boto3.client(service_name='s3',region_name='ap-south-1')
 translate_client = boto3.client(service_name='translate', region_name='ap-south-1', use_ssl=True)
 s3_client = boto3.client('s3', region_name='ap-south-1')
+polly_client = boto3.client(
+    service_name="polly",
+    region_name="ap-south-1"
+)
+transcribe = boto3.client("transcribe", region_name="ap-south-1")
+
 def takeCommand():
-    # Specify the path to your text file
-    
     data=s3.get_object(Bucket="transcribetestkritin", Key=f"speech_to_text/text.json")
     body=data['Body'].read().decode('utf-8')
     data=json.loads(body)
     print(data)
-    # Read data from the text file
-    
     return data
+
 def update_yield_in_excel(cow_id, new_yield):
     # Read the Excel file
     try:
@@ -65,13 +64,9 @@ def update_yield_in_excel(cow_id, new_yield):
         df.to_excel(ttp, sheet_name="Sheet1", index=False, engine='openpyxl')
     except Exception as e:
         print(f"Error writing to Excel file: {e}")
+        
 def normalize_text(text):
-    
-    # Remove all non-alphanumeric characters and convert to lowercase
     return re.sub(r'[^a-zA-Z0-9\s]', ' ', text).lower()
-
-   
-
 
 def convert_numerical_words(text):
     # Regular expression to find all numerical word sequences
@@ -86,11 +81,6 @@ def convert_numerical_words(text):
         return str(w2n.word_to_num(num_text))
 
     return pattern.sub(replace_num_words, text)
-
-def normalize_text(text):
-    
-    # Remove all non-alphanumeric characters and convert to lowercase
-    return re.sub(r'[^a-zA-Z0-9\s]', ' ', text).lower()
 
 def extract_info(text):
 
@@ -152,7 +142,6 @@ def extract_info(text):
             break
     return found_cow_id, yield_amount
 
-
 def final_data(tag_number, new_yield):
     # Read the Excel file
     try:
@@ -160,13 +149,8 @@ def final_data(tag_number, new_yield):
     except Exception as e:
         print(f"Error reading Excel file: {e}")
         return
-    
-    
-    
-    
     if 'tag_number' not in df.columns:
         raise ValueError("The required column does not exist in the Excel file.")
-    
     
     # Find the row where the cow name matches and update the yield
     data = pd.DataFrame()
@@ -175,40 +159,18 @@ def final_data(tag_number, new_yield):
     text = {
     'tag_number': [tag_number],
     'yield': [new_yield],
-    'date': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
-        }
+    'date': [datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+    }
     extracted = pd.DataFrame(text)
     # final_df = pd.merge( data, extracted, right_on=['tag_number'], left_on=['tag_number'])
     # last_df = final_df.to_json()
     data['tag_number'] = data['tag_number'].astype(str)
     extracted['tag_number'] = extracted['tag_number'].astype(str)
-    extracted['date']=pd.to_datetime(extracted['date'])
-    return extracted, data
+    final_df = pd.merge(data, extracted, right_on=['tag_number'], left_on=['tag_number'])
+    json_output = final_df.to_json(orient='records', date_format='iso')
+    #extracted['date']=pd.to_datetime(extracted['date'])
+    return json_output
 
-
-    
-
-# Initialize the boto3 client with the credentials
-bedrock_runtime = boto3.client(
-    service_name="bedrock-runtime",
-    region_name="ap-south-1"
-)
-#initializing the polly for text to speech
-polly_client = boto3.client(
-    service_name="polly",
-    region_name="ap-south-1"
-)
-#intializing the amzon translate
-translate = boto3.client(
-    service_name="translate",
-    region_name="ap-south-1"
-)
-s3 = boto3.client("s3", region_name="ap-south-1")
-transcribe = boto3.client("transcribe", region_name="ap-south-1")
-#model_id = "anthropic.claude-3-haiku-20240307-v1:0"
-#model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
-
-#defining the text to speech function
 def text_to_speech(text, voice_id="Aditi"):
     try:
         response = polly_client.synthesize_speech(
@@ -223,9 +185,6 @@ def text_to_speech(text, voice_id="Aditi"):
         st.error(f"Error in text-to-speech conversion: {e}")
         return None
     
-#defining the translate function to translate into different languages
-
-
 def save_audio_to_wav(audio_bytes, filename="confirmation.wav"):
     audio_io = BytesIO(audio_bytes)
     with wave.open(audio_io, 'rb') as wf:
@@ -234,9 +193,7 @@ def save_audio_to_wav(audio_bytes, filename="confirmation.wav"):
             output_wav.setsampwidth(wf.getsampwidth())
             output_wav.setframerate(wf.getframerate())
             output_wav.writeframes(wf.readframes(wf.getnframes()))
-
-
-
+            
 def upload_to_s3(filename, bucket, object_name=None):
     if object_name is None:
         object_name = filename
@@ -246,7 +203,7 @@ def upload_to_s3(filename, bucket, object_name=None):
     except Exception as e:
         logging.error(f"Error uploading file to S3: {e}")
         return False
-
+    
 def transcribe_speech(file_path):
     # Generate a unique job name with timestamp
     job_name = f"transcription_job_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -285,12 +242,9 @@ def transcribe_speech(file_path):
         logging.error("Transcription failed")
         return ""
     
-    file_uri=f"s3://{bucket_name}/output.wav"
-    text=transcribe_speech(file_uri)
-
-def translate_texti(text, source_language, target_language):
+def translate_text(text, source_language, target_language):
     try:
-        response = translate.translate_text(
+        response = translate_client.translate_text(
             Text=text,
             SourceLanguageCode=source_language,
             TargetLanguageCode=target_language
@@ -300,7 +254,7 @@ def translate_texti(text, source_language, target_language):
         logging.error(f"Error during translation: {e}")
         return text
     
-
+    
 # Streamlit main app function
 def main():
     st.title("Chat Bot")
@@ -350,7 +304,7 @@ def main():
             st.session_state.chat_history.append(f"You ({selected_language}): {user_input}")
             try:
                 logging.debug(f"User input: {user_input}")
-                translated_input = translate_texti(user_input, "hi-IN", "en")
+                translated_input = translate_text(user_input, "hi-IN", "en")
                 logging.debug(f"translated text: {translated_input}")
                 sam ={
                 "text":translated_input
@@ -359,78 +313,56 @@ def main():
                 try: 
                     key = f"speech_to_text/text.json"
                     s3.put_object(Body=jd,Bucket=bucket_name,Key=key)
-                #aishna's code (extraction)
-                #adithya's code (text to speech audio streamlit)
-                
                 except Exception as e:
                     print(str(e))
-                
+##------------------------aishna code ------------------------#####-----------------------------------------------------------
                 command = takeCommand()
                 if command:
                     cow_id, yield_amount = extract_info(command)
                     if cow_id and yield_amount:
                         print(f"Tag number: {cow_id}, Yield Amount: {yield_amount} litres")
-                        extracted, data=final_data(cow_id, yield_amount)
-                        final_df = pd.merge(data, extracted, right_on=['tag_number'], left_on=['tag_number'])
-                        last_df = final_df.to_json()
-                        print(last_df)
-                        file=json.dumps(last_df)
-                        key = "Extracted_text/extracted_text.json"
-                        s3.put_object(Body=file, Bucket="transcribetestkritin", Key=key)
+                        final_json=final_data(cow_id, yield_amount)
+                        json_body = json.loads(final_json)
+                        json_dict = json_body[0]
+                        key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
+                        s3.put_object(Body=final_json, Bucket=bucket_name, Key=key)
                     else:
                         print("No cow ID or yield amount found in the input.")
                 else:
                     print("Failed to read file")
-                #key = f"{bucket_name}/transcribetextkritin/text.txt"
-                #s3.put_object(Bucket=bucket_name, body=translated_input, Key=key)
-                #object_name="translated.txt"
-                
-                #st.session_state.chat_history.append(f"Synthia: {translated_response}")
+###-------------------------------- adhitya code ----------------------- ####- ---------------------------------------------------------                    
                 try:
-                    bucket_nam = "transcribetestkritin"
-                    key = "Extracted_text/extracted_text.json"
-                    response = s3_client.get_object(Bucket=bucket_nam, Key=key)
-                    x = json.loads(response['Body'].read().decode('utf-8'))
-                    json_dict = json.loads(x)
+                    key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
+                    response = s3.get_object(Bucket=bucket_name, Key=key)
+                    x = response['Body'].read().decode('utf-8')
+                    # Check if x is a string and needs to be loaded as JSON
                     if isinstance(x, str):
                         x = json.loads(x)
-                    for key in x:
-                        result = translate_client.translate_text(
-                            Text=str(x[key]["0"]),
-                            SourceLanguageCode="en",
-                            TargetLanguageCode="hi"
-                        )
-                        x[key]["0"] = result.get('TranslatedText')
-                        
-                    tag_number = x['tag_number']['0']
-                    milk_yield = x['yield']['0']
-                    farm_name = x['farm_name']['0']
-                    timestamp_ms = int(x['date']['0'])
-
-# Convert the timestamp from milliseconds to seconds
-                    timestamp_s = timestamp_ms / 1000.0
-                    date = datetime.fromtimestamp(timestamp_s)
-                    date_time = date.strftime('%Y-%m-%d %H:%M:%S')
-                    hindi_string = f"आपके खेत का नाम {farm_name}, इस {date_time} पर , गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया 100 | क्या ये सही है?"
-                    audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
-
-# Convert the timestamp from milliseconds to seconds
-                   
-                    #
-                    hindi_string = f"आपके खेत का नाम {farm_name}, इस {date_time} पर , गाय आईडी {tag_number} ने {milk_yield} किलो दूध  दिया| क्या ये सही है?"
-                    audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
-                
-                    
-                    if audio_base64:
-                        audio_bytes = base64.b64decode(audio_base64)
-                        st.audio(audio_bytes, format='audio/mp3')
-                        st.write(hindi_string)
-                        time.sleep(10)
-                
+                    # x should now be a list, not a dictionary
+                    if isinstance(x, list):
+                        json_dict = x[0]  # Take the first entry from the list
+                        print(json_dict)
+                        for key in json_dict:
+                            result = translate_text(json_dict[key], "en", "hi")
+                            print(result)
+                            json_dict[key] = result
+                        tag_number = json_dict['tag_number']
+                        milk_yield = json_dict['yield']
+                        farm_name = json_dict['farm_name']
+                        date = json_dict['date']
+                        hindi_string = f"आपके खेत का नाम {farm_name} गाय आईडी {tag_number} ने {milk_yield} किलो {date} दूध दिया| क्या ये सही है?"
+                        audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
+                        if audio_base64:
+                            audio_bytes = base64.b64decode(audio_base64)
+                            st.audio(audio_bytes, format='audio/mp3')
+                            st.write(hindi_string)
+                            time.sleep(10)
+                    else:
+                        logging.error("Unexpected JSON format: not a list.")
                 except Exception as e:
-                    logging.error(f"Error during Polly TTS: {e}")
-                    st.error(f"Error during TTS: {e}")
-                
+                    logging.error(f"Error during Polly TTS: {e}")    
+## ---------------------------------------- krithin yes/no code -----------------------------------------------###-----------------------------                                
+            ##on progress
             except Exception as e:
                 logging.error(f"Error during chain invocation: {e}")
                 st.error(f"Error during invocation: {e}")
