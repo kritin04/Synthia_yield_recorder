@@ -375,7 +375,7 @@ def main():
                         last_df = final_df.to_json()
                         print(last_df)
                         file=json.dumps(last_df)
-                        key = f"Extracted_text/{temp_df['farm_name']}/{temp_df['deviceid']}/extracted_text.json"
+                        key = "Extracted_text/extracted_text.json"
                         s3.put_object(Body=file, Bucket="transcribetestkritin", Key=key)
                     else:
                         print("No cow ID or yield amount found in the input.")
