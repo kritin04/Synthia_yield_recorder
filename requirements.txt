@@ -4,3 +4,4 @@ numpy==1.26.3
 streamlit==1.29.0
 pandas==1.5.3
 audio_recorder_streamlit==0.0.9
+word2number==1.1
