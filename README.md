@@ -56,10 +56,10 @@ The extracted data will be updated in the Excel file stored in S3 and converted 
 - `main()`: Main function to run the Streamlit app.
 
 
-##License
+## License
    '''This project is licensed under the MIT License. See the LICENSE file for details.
 
-##Acknowledgments
+## Acknowledgments
 - Streamlit
 - AWS
 - Pandas
