@@ -49,48 +49,29 @@ The app will transcribe, translate, and extract the cow ID and yield from your i
 The extracted data will be updated in the Excel file stored in S3 and converted to a JSON format for further use.
 
 File Structure
-
 app.py: The main Streamlit app.
-
 requirements.txt: List of required Python packages.
-
 CowIDs.xlsx: Initial Excel file containing cow IDs and yield data (to be placed in the same directory).
 
 Functions
-
 takeCommand(): Retrieve transcription data from S3.
-
 update_yield_in_excel(cow_id, new_yield): Update the yield information in the Excel file.
-
 normalize_text(text): Normalize the text by removing non-alphanumeric characters.
-
 convert_numerical_words(text): Convert numerical words to digits.
-
 extract_info(text): Extract cow ID and yield information from the text.
 final_data(tag_number, new_yield): Generate final JSON data.
-
 text_to_speech(text, voice_id="Aditi"): Convert text to speech using AWS Polly.
-
 save_audio_to_wav(audio_bytes, filename="confirmation.wav"): Save audio bytes to a WAV file.
-
 upload_to_s3(filename, bucket, object_name=None): Upload a file to S3.
-
 transcribe_speech(file_path): Transcribe speech from an audio file using AWS Transcribe.
-
 translate_text(text, source_language, target_language): Translate text using AWS Translate.
-
 main(): Main function to run the Streamlit app.
 
 License
 This project is licensed under the MIT License. See the LICENSE file for details.
-
 Acknowledgments
-
 Streamlit
-
 AWS
-
 Pandas
-
 word2number
 
