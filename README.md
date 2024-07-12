@@ -24,11 +24,11 @@ Yield Recorder is a Streamlit application designed to record and manage cow milk
    ```bash
    git clone https://github.com/your-username/your-repo-name.git
    cd your-repo-name
-## Use your aws keys
+## Set up your AWS credentials
 - export AWS_ACCESS_KEY_ID='your-access-key-id'
  -export AWS_SECRET_ACCESS_KEY='your-secret-access-key'
 
-
+## How to use the app
 Click "Click to record" to start recording your audio input in Hindi.
 
 The app will transcribe, translate, and extract the cow ID and yield from your input.
