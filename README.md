@@ -24,29 +24,10 @@ Yield Recorder is a Streamlit application designed to record and manage cow milk
    ```bash
    git clone https://github.com/your-username/your-repo-name.git
    cd your-repo-name
+## Use your aws keys
+- export AWS_ACCESS_KEY_ID='your-access-key-id'
+ -export AWS_SECRET_ACCESS_KEY='your-secret-access-key'
 
-export AWS_ACCESS_KEY_ID='your-access-key-id'
-export AWS_SECRET_ACCESS_KEY='your-secret-access-key'
-
-
-bash
-Copy code
-pip install -r requirements.txt
-Set up your AWS credentials:
-
-python
-Copy code
-export AWS_ACCESS_KEY_ID='your-access-key-id'
-export AWS_SECRET_ACCESS_KEY='your-secret-access-key'
-Create an S3 bucket and upload the initial Excel file (CowIDs.xlsx) with cow IDs and yield data.
-
-Usage
-Run the Streamlit app:
-
-bash
-Copy code
-streamlit run app.py
-Open the provided URL in your web browser.
 
 Click "Click to record" to start recording your audio input in Hindi.
 
@@ -54,10 +35,10 @@ The app will transcribe, translate, and extract the cow ID and yield from your i
 
 The extracted data will be updated in the Excel file stored in S3 and converted to a JSON format for further use.
 
-File Structure
-app.py: The main Streamlit app.
-requirements.txt: List of required Python packages.
-CowIDs.xlsx: Initial Excel file containing cow IDs and yield data (to be placed in the same directory).
+### File Structure
+-app.py: The main Streamlit app.
+-requirements.txt: List of required Python packages.
+-CowIDs.xlsx: Initial Excel file containing cow IDs and yield data (to be placed in the same directory).
 
 ### Functions
 
@@ -75,11 +56,12 @@ CowIDs.xlsx: Initial Excel file containing cow IDs and yield data (to be placed 
 - `main()`: Main function to run the Streamlit app.
 
 
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
-Acknowledgments
-Streamlit
-AWS
-Pandas
-word2number
+##License
+   '''This project is licensed under the MIT License. See the LICENSE file for details.
+
+##Acknowledgments
+-Streamlit
+-AWS
+-Pandas
+-word2number
 
