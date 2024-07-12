@@ -57,7 +57,7 @@ The extracted data will be updated in the Excel file stored in S3 and converted 
 
 
 ## License
-   '''This project is licensed under the MIT License. See the LICENSE file for details.
+   This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgments
 - Streamlit
