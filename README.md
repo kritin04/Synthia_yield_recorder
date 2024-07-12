@@ -2,26 +2,32 @@
 Yield Recorder
 Yield Recorder is a Streamlit application designed to record and manage cow milk yield data using speech input in Hindi. It uses AWS services such as S3, Translate, Polly, and Transcribe to handle audio recording, transcription, translation, and text-to-speech functionalities.
 
-Features
-Audio Recording: Record audio directly from the app.
-Transcription: Convert recorded audio to text using AWS Transcribe.
-Translation: Translate the transcribed text from Hindi to English using AWS Translate.
-Information Extraction: Extract cow ID and yield information from the translated text.
-Excel Integration: Update the yield information in an Excel file.
-Text-to-Speech: Convert text responses to audio using AWS Polly.
-S3 Integration: Upload and download files to/from AWS S3.
-Prerequisites
-Python 3.7+
-AWS account with access to S3, Transcribe, Translate, and Polly services
-Streamlit
-Installation
-Clone the repository:
+# Features
 
-bash
-Copy code
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
-Install the required Python packages:
+- **Audio Recording**: Record audio directly from the app.
+- **Transcription**: Convert recorded audio to text using AWS Transcribe.
+- **Translation**: Translate the transcribed text from Hindi to English using AWS Translate.
+- **Information Extraction**: Extract cow ID and yield information from the translated text.
+- **Excel Integration**: Update the yield information in an Excel file.
+- **Text-to-Speech**: Convert text responses to audio using AWS Polly.
+- **S3 Integration**: Upload and download files to/from AWS S3.
+
+## Prerequisites
+
+- Python 3.7+
+- AWS account with access to S3, Transcribe, Translate, and Polly services
+- Streamlit
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/your-repo-name.git
+   cd your-repo-name
+
+export AWS_ACCESS_KEY_ID='your-access-key-id'
+export AWS_SECRET_ACCESS_KEY='your-secret-access-key'
+
 
 bash
 Copy code
