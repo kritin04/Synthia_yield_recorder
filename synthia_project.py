@@ -17,7 +17,7 @@ from datetime import datetime
 import time
 bucket_name = "transcribetestkritin"
 
-ttp = r'CowIDs.xlsx'
+ttp = r'C:\Users\Kritin\Desktop\chatbot\test\env\CowIDs_Sheet1_.xlsx'
 os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA5FTY7VMV5OJBO7NW'
 os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
 
@@ -29,6 +29,18 @@ polly_client = boto3.client(
     region_name="ap-south-1"
 )
 transcribe = boto3.client("transcribe", region_name="ap-south-1")
+
+st.markdown(
+    '''
+    <style>
+    iframe[title="audio_recorder_streamlit.audio_recorder"] {
+        height: auto;
+    }
+    </style>
+    ''',
+    unsafe_allow_html=True
+)
+
 
 def takeCommand():
     data=s3.get_object(Bucket="transcribetestkritin", Key=f"speech_to_text/text.json")
@@ -94,27 +106,19 @@ def extract_info(text):
         
         # Print column names to verify
     print("Column names in the Excel file:", df.columns.tolist())
-
         # Ensure 'name' column exists
     if 'tag_number' not in df.columns:
         raise ValueError("The 'tag_number' column does not exist in the Excel file.")
-        
     cow_ids = df["tag_number"].tolist()
-    
     cow_ids = list(map(str, cow_ids))
-    
     sentence=text[0]['text']
     conv_text=convert_numerical_words(sentence)
-    
-    
     normalized_text = normalize_text(conv_text)
-    
     # Initialize variables to store the found cow ID and yield
     words = conv_text.lower().split()
     # Extract tag number
     tag_index = words.index('number') if 'number' in words else -1
     tag_number = words[tag_index + 1] if tag_index != -1 and tag_index + 1 < len(words) else None
-   
     # Extract milk yield
     if 'litres' in words:
         milk_index = words.index('litres')
@@ -194,6 +198,15 @@ def save_audio_to_wav(audio_bytes, filename="confirmation.wav"):
             output_wav.setframerate(wf.getframerate())
             output_wav.writeframes(wf.readframes(wf.getnframes()))
             
+def save_audio_to_wav_conf(audio_bytes, filename="confirmation_response.wav"):
+    audio_io = BytesIO(audio_bytes)
+    with wave.open(audio_io, 'rb') as wf:
+        with wave.open(filename, 'wb') as output_wav:
+            output_wav.setnchannels(wf.getnchannels())
+            output_wav.setsampwidth(wf.getsampwidth())
+            output_wav.setframerate(wf.getframerate())
+            output_wav.writeframes(wf.readframes(wf.getnframes()))
+            
 def upload_to_s3(filename, bucket, object_name=None):
     if object_name is None:
         object_name = filename
@@ -253,18 +266,16 @@ def translate_text(text, source_language, target_language):
     except Exception as e:
         logging.error(f"Error during translation: {e}")
         return text
-
 # Streamlit main app function
 def main():
+    global cow_id, yield_amount
     st.title("Yield Recorder")
     st.write("Tell me what is the yield of your cow!")
     
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
-
     chat_container = st.container()
     user_input_container = st.container()
-
     with chat_container:
         for i, chat in enumerate(st.session_state.chat_history):
             st.write(chat)
@@ -273,15 +284,13 @@ def main():
                     audio_base64 = text_to_speech(chat[8:])
                     if audio_base64:
                         st.audio(base64.b64decode(audio_base64), format='audio/mp3')
-                        #st.audio(reduce_noise(base64.b64decode(audio_base64)), format='audio/wav')
-
-    with user_input_container: # input to take the audio
+    with user_input_container:  # input to take the audio
         audio_bytes = audio_recorder(
             text="Click to record",
             recording_color="#FF0000",
             neutral_color="#FFFFFF"
         )
-        if audio_bytes is not None: #input tag number, yield 
+        if audio_bytes is not None:  # input tag number, yield
             save_audio_to_wav(audio_bytes)
             st.audio(audio_bytes, format='audio/wav')
             st.session_state.chat_history.append("You (Hindi): [Audio Message]")
@@ -309,7 +318,6 @@ def main():
                         s3.put_object(Body=jd, Bucket=bucket_name, Key=key)
                     except Exception as e:
                         print(str(e))
-
                     command = takeCommand()
                     if command:
                         cow_id, yield_amount = extract_info(command)
@@ -320,42 +328,52 @@ def main():
                             json_dict = json_body[0]
                             key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
                             s3.put_object(Body=final_json, Bucket=bucket_name, Key=key)
-                        else:
-                            print("No cow ID or yield amount found in the input.")
-                    else:
-                        print("Failed to read file")
-
-                    try:
-                        key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
-                        response = s3.get_object(Bucket=bucket_name, Key=key)
-                        x = response['Body'].read().decode('utf-8')
-                        if isinstance(x, str):
-                            x = json.loads(x)
-                        if isinstance(x, list):
-                            json_dict = x[0]
-                            print(json_dict)
-                            for key in json_dict:
-                                result = translate_text(json_dict[key], "en", "hi")
-                                print(result)
-                                json_dict[key] = result
-                            tag_number = json_dict['tag_number']
-                            milk_yield = json_dict['yield']
-                            farm_name = json_dict['farm_name']
-                            date = json_dict['date']
-                            hindi_string = f"आपके खेत का नाम {farm_name} गाय आईडी {tag_number} ने {milk_yield} किलो {date} दूध दिया| क्या ये सही है?"
+                            
+                            # Request confirmation
+                            hindi_string = f"आपके खेत का नाम {json_dict['farm_name']} गाय आईडी {json_dict['tag_number']} ने {json_dict['yield']} किलो {json_dict['date']} दूध दिया| क्या ये सही है?"
                             audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
                             if audio_base64:
                                 audio_bytes = base64.b64decode(audio_base64)
                                 st.audio(audio_bytes, format='audio/mp3')
                                 st.write(hindi_string)
                                 time.sleep(10)
+##----------------------------------------------------- under process -------------------------------------------------------------#####                            
+                            confirm_audio_bytes = audio_recorder(
+                                text="Click to confirm",
+                                recording_color="#00FF00",  # Green color
+                                neutral_color="#FFFFFF"
+                            )
+                            # confirmation audio processing will be start from this
+                            if confirm_audio_bytes is not None:
+                                save_audio_to_wav(confirm_audio_bytes, filename="confirmation_response.wav")
+                                st.audio(confirm_audio_bytes, format='audio/wav')
+                                if upload_to_s3("confirmation_response.wav", bucket_name, "confirmation_response.wav"):
+                                    file_uri = f"s3://{bucket_name}/confirmation_response.wav"
+                                    confirm_text = transcribe_speech(file_uri)
+                                    confirm_text_en = translate_text(confirm_text, "hi-IN", "en")
+                                    confirm_list = ["yes","yes.","YES","YES.","yes,","YES,""yes yes.","yes yes,","yes yes","yesyes","YESYES","YES YES","YES YES.","YES YES,"]
+                                    if confirm_text_en.lower() in confirm_list:
+                                        st.success("Confirmation received. Data stored successfully.")
+                                        try:
+                                            key = f"milk_data/{json_dict['farm_name']}/{json_dict['deviceid']}/yeild_record.json"
+                                            json_body = json.dumps(json_dict).encode('utf-8')
+                                            s3.put_object(Body=json_body, Bucket=bucket_name, Key=key)
+                                            print(f"data pushed to milk data")
+                                            print("calling update excel")
+                                            
+                                        except Exception as e:
+                                            logging.error(f"Error storing data to S3: {e}")
+                                    else:
+                                        st.error("Confirmation denied. Please provide the correct data.")
+                                        
+                                else:
+                                    st.error("Failed to upload confirmation audio to S3.")
                         else:
-                            logging.error("Unexpected JSON format: not a list.")
-                    except Exception as e:
-                        logging.error(f"Error during Polly TTS: {e}")
-                    
+                            print("No cow ID or yield amount found in the input.")
+                    else:
+                        print("Failed to read file")
                 except Exception as e:
-                    logging.error(f"Error during taking the  input: {e}")
+                    logging.error(f"Error during taking the input: {e}")
                     st.error(f"Error during input: {e}")
 if __name__ == '__main__':
     main()
