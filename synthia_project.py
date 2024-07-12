@@ -253,24 +253,18 @@ def translate_text(text, source_language, target_language):
     except Exception as e:
         logging.error(f"Error during translation: {e}")
         return text
-    
-    
+
 # Streamlit main app function
 def main():
-    st.title("Chat Bot")
-    st.write("Ask me anything about cow related queries!")
-    # Language selection
-    languages = {
-        "English": "en",
-        "Hindi": "hi"
-    }
-    language_choices = list(languages.keys())
-    selected_language = st.selectbox("Select your language:", language_choices)
-    selected_language_code = languages[selected_language]
+    st.title("Yield Recorder")
+    st.write("Tell me what is the yield of your cow!")
+    
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+
     chat_container = st.container()
     user_input_container = st.container()
+
     with chat_container:
         for i, chat in enumerate(st.session_state.chat_history):
             st.write(chat)
@@ -279,95 +273,88 @@ def main():
                     audio_base64 = text_to_speech(chat[8:])
                     if audio_base64:
                         st.audio(base64.b64decode(audio_base64), format='audio/mp3')
-    with user_input_container:
-        with st.form(key='input_form_unique', clear_on_submit=True):
-            user_input = st.text_input(f"You ({selected_language}): ", key="user_input")
-            submit_button = st.form_submit_button(label='Send')
-        # Adding live speech input button
+
+    with user_input_container: # input to take the audio
         audio_bytes = audio_recorder(
             text="Click to record",
             recording_color="#FF0000",
             neutral_color="#FFFFFF"
         )
-        if audio_bytes is not None:
+        if audio_bytes is not None: #input tag number, yield 
             save_audio_to_wav(audio_bytes)
             st.audio(audio_bytes, format='audio/wav')
-            st.session_state.chat_history.append(f"You ({selected_language}): [Audio Message]")
+            st.session_state.chat_history.append("You (Hindi): [Audio Message]")
             if upload_to_s3("confirmation.wav", bucket_name, "confirmation.wav"):
                 file_uri = f"s3://{bucket_name}/confirmation.wav"
                 user_input = transcribe_speech(file_uri)
                 if user_input:
                     st.session_state.chat_history.append(f"Transcription: {user_input}")
+                else:
+                    st.error("Failed to transcribe audio.")
             else:
                 st.error("Failed to upload audio to S3.")
-        if submit_button and user_input:
-            st.session_state.chat_history.append(f"You ({selected_language}): {user_input}")
-            try:
-                logging.debug(f"User input: {user_input}")
-                translated_input = translate_text(user_input, "hi-IN", "en")
-                logging.debug(f"translated text: {translated_input}")
-                sam ={
-                "text":translated_input
-                }
-                jd = json.dumps([sam])
-                try: 
-                    key = f"speech_to_text/text.json"
-                    s3.put_object(Body=jd,Bucket=bucket_name,Key=key)
-                except Exception as e:
-                    print(str(e))
-##------------------------aishna code ------------------------#####-----------------------------------------------------------
-                command = takeCommand()
-                if command:
-                    cow_id, yield_amount = extract_info(command)
-                    if cow_id and yield_amount:
-                        print(f"Tag number: {cow_id}, Yield Amount: {yield_amount} litres")
-                        final_json=final_data(cow_id, yield_amount)
-                        json_body = json.loads(final_json)
-                        json_dict = json_body[0]
-                        key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
-                        s3.put_object(Body=final_json, Bucket=bucket_name, Key=key)
-                    else:
-                        print("No cow ID or yield amount found in the input.")
-                else:
-                    print("Failed to read file")
-###-------------------------------- adhitya code ----------------------- ####- ---------------------------------------------------------                    
-                try:
-                    key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
-                    response = s3.get_object(Bucket=bucket_name, Key=key)
-                    x = response['Body'].read().decode('utf-8')
-                    # Check if x is a string and needs to be loaded as JSON
-                    if isinstance(x, str):
-                        x = json.loads(x)
-                    # x should now be a list, not a dictionary
-                    if isinstance(x, list):
-                        json_dict = x[0]  # Take the first entry from the list
-                        print(json_dict)
-                        for key in json_dict:
-                            result = translate_text(json_dict[key], "en", "hi")
-                            print(result)
-                            json_dict[key] = result
-                        tag_number = json_dict['tag_number']
-                        milk_yield = json_dict['yield']
-                        farm_name = json_dict['farm_name']
-                        date = json_dict['date']
-                        hindi_string = f"आपके खेत का नाम {farm_name} गाय आईडी {tag_number} ने {milk_yield} किलो {date} दूध दिया| क्या ये सही है?"
-                        audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
-                        if audio_base64:
-                            audio_bytes = base64.b64decode(audio_base64)
-                            st.audio(audio_bytes, format='audio/mp3')
-                            st.write(hindi_string)
-                            time.sleep(10)
-                    else:
-                        logging.error("Unexpected JSON format: not a list.")
-                except Exception as e:
-                    logging.error(f"Error during Polly TTS: {e}")    
-## ---------------------------------------- krithin yes/no code -----------------------------------------------###-----------------------------                                
-            ##on progress
-            except Exception as e:
-                logging.error(f"Error during chain invocation: {e}")
-                st.error(f"Error during invocation: {e}")
             
+            if user_input:
+                try:
+                    logging.debug(f"User input: {user_input}")
+                    translated_input = translate_text(user_input, "hi-IN", "en")
+                    logging.debug(f"Translated text: {translated_input}")
+                    sam = {
+                        "text": translated_input
+                    }
+                    jd = json.dumps([sam])
+                    try:
+                        key = f"speech_to_text/text.json"
+                        s3.put_object(Body=jd, Bucket=bucket_name, Key=key)
+                    except Exception as e:
+                        print(str(e))
 
+                    command = takeCommand()
+                    if command:
+                        cow_id, yield_amount = extract_info(command)
+                        if cow_id and yield_amount:
+                            print(f"Tag number: {cow_id}, Yield Amount: {yield_amount} litres")
+                            final_json = final_data(cow_id, yield_amount)
+                            json_body = json.loads(final_json)
+                            json_dict = json_body[0]
+                            key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
+                            s3.put_object(Body=final_json, Bucket=bucket_name, Key=key)
+                        else:
+                            print("No cow ID or yield amount found in the input.")
+                    else:
+                        print("Failed to read file")
 
+                    try:
+                        key = f"Extracted_text/{json_dict['farm_name']}/{json_dict['deviceid']}/extracted.json"
+                        response = s3.get_object(Bucket=bucket_name, Key=key)
+                        x = response['Body'].read().decode('utf-8')
+                        if isinstance(x, str):
+                            x = json.loads(x)
+                        if isinstance(x, list):
+                            json_dict = x[0]
+                            print(json_dict)
+                            for key in json_dict:
+                                result = translate_text(json_dict[key], "en", "hi")
+                                print(result)
+                                json_dict[key] = result
+                            tag_number = json_dict['tag_number']
+                            milk_yield = json_dict['yield']
+                            farm_name = json_dict['farm_name']
+                            date = json_dict['date']
+                            hindi_string = f"आपके खेत का नाम {farm_name} गाय आईडी {tag_number} ने {milk_yield} किलो {date} दूध दिया| क्या ये सही है?"
+                            audio_base64 = text_to_speech(hindi_string, voice_id="Aditi")
+                            if audio_base64:
+                                audio_bytes = base64.b64decode(audio_base64)
+                                st.audio(audio_bytes, format='audio/mp3')
+                                st.write(hindi_string)
+                                time.sleep(10)
+                        else:
+                            logging.error("Unexpected JSON format: not a list.")
+                    except Exception as e:
+                        logging.error(f"Error during Polly TTS: {e}")
+                    
+                except Exception as e:
+                    logging.error(f"Error during taking the  input: {e}")
+                    st.error(f"Error during input: {e}")
 if __name__ == '__main__':
     main()
