@@ -49,9 +49,13 @@ The app will transcribe, translate, and extract the cow ID and yield from your i
 The extracted data will be updated in the Excel file stored in S3 and converted to a JSON format for further use.
 
 File Structure
+
 app.py: The main Streamlit app.
+
 requirements.txt: List of required Python packages.
+
 CowIDs.xlsx: Initial Excel file containing cow IDs and yield data (to be placed in the same directory).
+
 Functions
 takeCommand(): Retrieve transcription data from S3.
 update_yield_in_excel(cow_id, new_yield): Update the yield information in the Excel file.
