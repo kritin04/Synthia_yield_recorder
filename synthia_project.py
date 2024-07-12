@@ -273,6 +273,7 @@ def main():
                     audio_base64 = text_to_speech(chat[8:])
                     if audio_base64:
                         st.audio(base64.b64decode(audio_base64), format='audio/mp3')
+                        st.audio(reduce_noise(base64.b64decode(audio_base64)), format='audio/wav')
 
     with user_input_container: # input to take the audio
         audio_bytes = audio_recorder(
