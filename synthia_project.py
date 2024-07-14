@@ -18,8 +18,8 @@ import time
 bucket_name = "transcribetestkritin"
 
 ttp = r'CowIDs.xlsx'
-os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA5FTY7VMV5OJBO7NW'
-os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
+os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA5FTY7VMV5OJjyfgjvBO7NW'
+os.environ['AWS_SECRET_ACCESS_KEY'] = '8vAiZp1Qcdy5457b8byb9t6bvfgc5x3Vm6W3LPU7DutxicvhjgjFur6/WN/bTDev/mXITUs'
 
 s3 = boto3.client(service_name='s3',region_name='ap-south-1')
 translate_client = boto3.client(service_name='translate', region_name='ap-south-1', use_ssl=True)
