@@ -17,7 +17,7 @@ from datetime import datetime
 import time
 bucket_name = "transcribetestkritin"
 
-ttp = r'CowIDs.xlsx'
+ttp = r'C:\Users\Kritin\Desktop\chatbot\test\env\CowIDs_Sheet1_.xlsx'
 os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA5FTY7VMV5OJBO7NW'
 os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
 
@@ -266,6 +266,7 @@ def translate_text(text, source_language, target_language):
     except Exception as e:
         logging.error(f"Error during translation: {e}")
         return text
+
 # Streamlit main app function
 def main():
     global cow_id, yield_amount
@@ -274,8 +275,10 @@ def main():
     
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+
     chat_container = st.container()
     user_input_container = st.container()
+
     with chat_container:
         for i, chat in enumerate(st.session_state.chat_history):
             st.write(chat)
@@ -284,6 +287,7 @@ def main():
                     audio_base64 = text_to_speech(chat[8:])
                     if audio_base64:
                         st.audio(base64.b64decode(audio_base64), format='audio/mp3')
+
     with user_input_container:  # input to take the audio
         audio_bytes = audio_recorder(
             text="Click to record",
@@ -351,16 +355,14 @@ def main():
                                     file_uri = f"s3://{bucket_name}/confirmation_response.wav"
                                     confirm_text = transcribe_speech(file_uri)
                                     confirm_text_en = translate_text(confirm_text, "hi-IN", "en")
-                                    confirm_list = ["yes","yes.","YES","YES.","yes,","YES,""yes yes.","yes yes,","yes yes","yesyes","YESYES","YES YES","YES YES.","YES YES,"]
+                                    confirm_list = ["yes","yes.","YES","YES.","yes,","YES,"]
                                     if confirm_text_en.lower() in confirm_list:
                                         st.success("Confirmation received. Data stored successfully.")
                                         try:
-                                            key = f"milk_data/{json_dict['farm_name']}/{json_dict['deviceid']}/yeild_record.json"
+                                            key = f"milk_data/{json_dict['farm_name']}/text.json"
                                             json_body = json.dumps(json_dict).encode('utf-8')
                                             s3.put_object(Body=json_body, Bucket=bucket_name, Key=key)
                                             print(f"data pushed to milk data")
-                                            print("calling update excel")
-                                            
                                         except Exception as e:
                                             logging.error(f"Error storing data to S3: {e}")
                                     else:
