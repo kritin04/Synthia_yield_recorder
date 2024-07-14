@@ -17,7 +17,7 @@ from datetime import datetime
 import time
 bucket_name = "transcribetestkritin"
 
-ttp = r'CowIDs'
+ttp = r'CowIDs.xlsx'
 os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA5FTY7VMV5OJBO7NW'
 os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
 
